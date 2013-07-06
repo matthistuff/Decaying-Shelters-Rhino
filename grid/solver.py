@@ -196,7 +196,7 @@ class Grid(object):
             self.rcs.append(guid)
             rhino_object = sc.doc.Objects.Find(guid)
             attr = rhino_object.Attributes
-            rc, gc, bc = self.lerp_color((0, 60, 100), (255, 153, 0), sub_box.score)
+            rc, gc, bc = self.lerp_color((250, 10, 10), (38, 201, 38), sub_box.score)
             attr.ObjectColor = System.Drawing.Color.FromArgb(1, rc, gc, bc)
             attr.ColorSource = r.DocObjects.ObjectColorSource.ColorFromObject
             sc.doc.Objects.ModifyAttributes(rhino_object, attr, True)
@@ -211,5 +211,7 @@ class Grid(object):
         [box.reset() for box in self.sub_boxes]
 
     def dispose(self):
-        if len(self.rcs) > 0:
-            rs.object.DeleteObjects(self.rcs)
+        for rc in self.rcs:
+            rs.object.DeleteObject(rc)
+            rsutil.rdnd()
+            rs.utility.Sleep(15)

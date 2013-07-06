@@ -1,12 +1,10 @@
-import rhinoscript as rs
-import scriptcontext as sc
-
-from util import rsutil
-
-import PiTweener
 import math
 import random
 
+import rhinoscript as rs
+import scriptcontext as sc
+
+import PiTweener
 import Rhino as r
 
 
@@ -19,6 +17,8 @@ class Camera(object):
         self.camera_lens = self.view.ActiveViewport.Camera35mmLensLength
         self.camera_location = self.view.ActiveViewport.CameraLocation
         self.camera_target = self.view.ActiveViewport.CameraTarget
+
+        self.default_duration = 4.0
 
         self.progress = 0
         self.update_callback = None
@@ -42,7 +42,7 @@ class Camera(object):
     def update_camera(self):
         self.view.ActiveViewport.SetCameraLocations(self.camera_target, self.camera_location)
 
-    def do_pan(self, hop=0, on_complete=None):
+    def do_pan(self, hop=0, duration=None, tween_type=None, on_complete=None):
         self.progress = 0
         self.update_callback = self.update_pan_locations
         self.complete_fired = False
@@ -55,7 +55,12 @@ class Camera(object):
         self.camera_path = r.Geometry.Curve.CreateControlPointCurve(
             [self.camera_location, camera_location_center, self.new_camera_location])
 
-        self.tweener.add_tween(self, progress=1.0, tween_time=4.0, tween_type=self.tweener.OUT_CUBIC)
+        if tween_type is None:
+            tween_type = self.tweener.OUT_CUBIC
+        if duration is None:
+            duration = self.default_duration
+
+        self.tweener.add_tween(self, progress=1.0, tween_time=duration, tween_type=tween_type)
 
     def update_pan_locations(self):
         self.camera_target = self.target_path.PointAt(self.progress)
@@ -77,11 +82,11 @@ class Camera(object):
         self.camera_target = self.new_camera_target
         self.update_camera()
 
-    def pan_to(self, obj, distance=None, hop=0, on_complete=None):
+    def pan_to(self, obj, distance=None, hop=0, duration=None, tween_type=None, on_complete=None):
         self.calculate_positions(obj, distance)
-        self.do_pan(hop, on_complete)
+        self.do_pan(hop, duration, tween_type, on_complete)
 
-    def circle_position(self, cycles=1, on_complete=None):
+    def circle_position(self, cycles=1, duration=None, tween_type=None, on_complete=None):
         self.progress = 0
         self.update_callback = self.update_circle_position
         self.complete_fired = False
@@ -89,8 +94,13 @@ class Camera(object):
 
         self.camera_vector = r.Geometry.Point3d.Subtract(self.camera_location, self.camera_target)
 
-        self.tweener.add_tween(self, progress=1.0 * cycles, tween_time=6.0 * cycles,
-                               tween_type=self.tweener.IN_OUT_CUBIC)
+        if tween_type is None:
+            tween_type = self.tweener.IN_OUT_CUBIC
+        if duration is None:
+            duration = self.default_duration
+
+        self.tweener.add_tween(self, progress=1.0 * cycles, tween_time=duration * cycles,
+                               tween_type=tween_type)
 
     def update_circle_position(self):
         vector_duplicate = r.Geometry.Vector3d(self.camera_vector)

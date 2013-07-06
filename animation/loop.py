@@ -19,7 +19,7 @@ class Loop(object):
     def add_callback(self, callback):
         self.callbacks.append(callback)
 
-    def run(self):
+    def start(self):
         self.running = True
         self.time = time.time()
         while True:
@@ -30,3 +30,4 @@ class Loop(object):
 
     def stop(self):
         self.running = False
+        rsutil.rdnd()

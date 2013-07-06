@@ -4,7 +4,7 @@ from urlparse import urlparse, parse_qs
 import json
 
 from grid import solver, grid_modifiers
-from shelter import base, plan_modifiers, hull_modifiers
+from shelter import shelter, plan_modifiers, hull_modifiers
 from util import osmutil, geoutil, rsutil
 
 
@@ -48,7 +48,7 @@ class DSRequestHandler(BaseHTTPRequestHandler):
                 lat = float(args.get('lat')[0])
                 lon = float(args.get('lon')[0])
 
-                shelter = base.Shelter(lat, lon)
+                shelter = shelter.Shelter(lat, lon)
                 shelter.plan.add_modifier(plan_modifiers.WindModifier)
                 shelter.plan.add_modifier(plan_modifiers.SunPlanModifier)
                 shelter.hull.add_modifier(hull_modifiers.SunHullModifier, 1)

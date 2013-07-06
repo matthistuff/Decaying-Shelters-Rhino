@@ -139,6 +139,8 @@ class OSMData(object):
                         rsutil.rdnd()
                     i += 1
 
+                rsutil.rdnd()
+
             rs.layer.CurrentLayer(current_layer)
 
         else:
