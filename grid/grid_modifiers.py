@@ -7,7 +7,7 @@ import Rhino as r
 
 
 class GridModifier(object):
-    def __init__(self, solver, weight=1):
+    def __init__(self, solver, weight=1.0):
         self.solver = solver
         self.length = 1
         self.weight = weight
@@ -17,8 +17,8 @@ class GridModifier(object):
         def solve_parallel(i):
             self.solve_item(i)
 
-        tasks.Parallel.ForEach(xrange(self.length), solve_parallel)
-        #[solve_parallel(i) for i in xrange(self.length)]
+        #tasks.Parallel.ForEach(xrange(self.length), solve_parallel)
+        [solve_parallel(i) for i in xrange(self.length)]
 
     def solve_item(self, i):
         pass
@@ -28,14 +28,15 @@ class GridModifier(object):
 
 
 class ShadowModifier(GridModifier):
-    def __init__(self, solver, weight=1):
+    def __init__(self, solver, weight=1.0):
         super(ShadowModifier, self).__init__(solver, weight)
 
         self.name = 'shadows'
 
         self.sun = SunVector(self.solver.lat, self.solver.lon, self.solver.date)
-        self.positions = self.sun.get_positions()
+        self.positions = self.sun.get_positions(60)
         self.vectors = [self.sun.sun_to_vec(alt, azi) for alt, azi in self.positions]
+
         self.length = len(self.positions)
 
     def solve_item(self, i):
@@ -45,8 +46,13 @@ class ShadowModifier(GridModifier):
             return
 
         vector = self.vectors[i]
+
         outlines = self.generate(vector)
-        self.check(outlines)
+
+        if len(outlines) > 0:
+            self.check(outlines)
+        else:
+            [self.add_score(box, 1) for box in self.solver.grid.sub_boxes]
 
     def generate(self, vector):
         outlines = [rsutil.create_shadow(obj, vector) for obj in self.solver.objects]
@@ -58,6 +64,10 @@ class ShadowModifier(GridModifier):
     def check(self, outlines):
         for box in self.solver.grid.sub_boxes:
             differences = [r.Geometry.Curve.CreateBooleanIntersection(box.curve, outline) for outline in outlines]
+
+            #check_curve = box.curve.Duplicate()
+            #differences = [r.Geometry.Curve.CreateBooleanIntersection(check_curve, outline) for outline in outlines]
+            #check_curve.Dispose()
 
             real_differences = []
             [real_differences.extend(difference) for difference in differences]
@@ -79,7 +89,7 @@ class ShadowModifier(GridModifier):
 
 
 class StreetModifier(GridModifier):
-    def __init__(self, solver, weight=1):
+    def __init__(self, solver, weight=1.0):
         super(StreetModifier, self).__init__(solver, weight)
 
         self.name = 'streets'

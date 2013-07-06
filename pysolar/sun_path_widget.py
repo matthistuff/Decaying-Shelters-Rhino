@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 
 import pygtk
+
 pygtk.require('2.0')
 import gtk
 import horizon
 
-class Base:
 
+class Base:
     def __init__(self):
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         self.window.connect('delete_event', self.delete_event)
@@ -20,11 +21,11 @@ class Base:
         self.horizon_button = gtk.Button('Find horizon')
         self.add_sun_paths_button = gtk.Button('Add sun paths')
 
-#        self.chooser = gtk.FileChooserDialog(title=None, action=gtk.FILE_CHOOSER_ACTION_OPEN, buttons=(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OPEN, gtk.RESPONSE_OK))
+        #        self.chooser = gtk.FileChooserDialog(title=None, action=gtk.FILE_CHOOSER_ACTION_OPEN, buttons=(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OPEN, gtk.RESPONSE_OK))
 
         self.load_image_button.connect('clicked', FileSelectionExample)
         self.despherify_button.connect('clicked', horizon.despherifyImage)
-#        self.horizon_button.connect('clicked', horizon)
+        #        self.horizon_button.connect('clicked', horizon)
         self.add_sun_paths_button.connect('clicked', horizon.addSunPaths)
 
         self.image = gtk.Image()
@@ -60,6 +61,7 @@ class Base:
     def main(self):
         gtk.main()
 
+
 class FileSelectionExample:
     # Get the selected filename and print it to the console
     def file_ok_sel(self, w):
@@ -76,7 +78,7 @@ class FileSelectionExample:
 
         # Connect the ok_button to file_ok_sel method
         self.filew.ok_button.connect("clicked", self.file_ok_sel)
-                                                                            
+
         # Connect the cancel_button to destroy the widget
         self.filew.cancel_button.connect("clicked", lambda w: self.filew.destroy())
 
@@ -85,6 +87,7 @@ class FileSelectionExample:
         self.filew.set_filename('penguin.png')
         self.filew.show()
 
-if __name__  == '__main__':
+
+if __name__ == '__main__':
     base = Base()
     base.main()

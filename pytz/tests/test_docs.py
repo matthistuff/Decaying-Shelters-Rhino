@@ -9,11 +9,12 @@ import warnings
 def test_README():
     pass
 
+
 this_dir = os.path.dirname(__file__)
 locs = [
     os.path.join(this_dir, os.pardir, 'README.txt'),
     os.path.join(this_dir, os.pardir, os.pardir, 'README.txt'),
-    ]
+]
 for loc in locs:
     if os.path.exists(loc):
         test_README.__doc__ = open(loc).read()
@@ -30,7 +31,7 @@ def test_suite():
 if __name__ == '__main__':
     sys.path.insert(0, os.path.abspath(os.path.join(
         this_dir, os.pardir, os.pardir
-        )))
+    )))
     unittest.main(defaultTest='test_suite')
 
 

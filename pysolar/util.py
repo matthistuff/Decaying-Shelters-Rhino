@@ -94,43 +94,46 @@ def GetSunriseSunset(latitude_deg, longitude_deg, utc_datetime, timezone):
     day = solar.GetDayOfYear(utc_datetime)
 
     # Solar hour angle
-    SHA = ((timezone)* 15.0 - longitude_deg)
+    SHA = ((timezone) * 15.0 - longitude_deg)
 
     # Time adjustment
-    TT = (279.134+0.985647*day)*math.pi/180
+    TT = (279.134 + 0.985647 * day) * math.pi / 180
 
     # Time adjustment in hours
-    time_adst = ((5.0323 - 100.976*math.sin(TT)+595.275*math.sin(2*TT)+
-                  3.6858*math.sin(3*TT) - 12.47*math.sin(4*TT) - 430.847*math.cos(TT)+
-                  12.5024*math.cos(2*TT) + 18.25*math.cos(3*TT))/3600)
- 
+    time_adst = ((5.0323 - 100.976 * math.sin(TT) + 595.275 * math.sin(2 * TT) +
+                  3.6858 * math.sin(3 * TT) - 12.47 * math.sin(4 * TT) - 430.847 * math.cos(TT) +
+                  12.5024 * math.cos(2 * TT) + 18.25 * math.cos(3 * TT)) / 3600)
+
     # Time of noon
-    TON = (12 + (SHA/15.0) - time_adst)
-    
-    sunn = (math.pi/2-(23.45*math.pi/180)*math.tan(latitude_deg*math.pi/180)*
-            math.cos(2*math.pi*day/365.25))*(180/(math.pi*15))
+    TON = (12 + (SHA / 15.0) - time_adst)
+
+    sunn = (math.pi / 2 - (23.45 * math.pi / 180) * math.tan(latitude_deg * math.pi / 180) *
+            math.cos(2 * math.pi * day / 365.25)) * (180 / (math.pi * 15))
 
     # Sunrise_time in hours
     sunrise_time = (TON - sunn + time_adst)
- 
-    # Sunset_time in hours
-    sunset_time = (TON + sunn - time_adst) 
 
-    sunrise_time_dt = date_with_decimal_hour(utc_datetime, sunrise_time)    
-    sunset_time_dt = date_with_decimal_hour(utc_datetime, sunset_time)    
+    # Sunset_time in hours
+    sunset_time = (TON + sunn - time_adst)
+
+    sunrise_time_dt = date_with_decimal_hour(utc_datetime, sunrise_time)
+    sunset_time_dt = date_with_decimal_hour(utc_datetime, sunset_time)
 
     return sunrise_time_dt, sunset_time_dt
 
+
 def GetSunriseTime(latitude_deg, longitude_deg, utc_datetime, timezone):
-    "Wrapper for GetSunriseSunset that returns just the sunrise time" 
+    "Wrapper for GetSunriseSunset that returns just the sunrise time"
     sr, ss = GetSunriseSunset(latitude_deg, longitude_deg, utc_datetime, timezone)
-    
+
     return sr
 
+
 def GetSunsetTime(latitude_deg, longitude_deg, utc_datetime, timezone):
-    "Wrapper for GetSunriseSunset that returns just the sunset time" 
-    sr, ss = GetSunriseSunset(latitude_deg, longitude_deg, utc_datetime, timezone)    
+    "Wrapper for GetSunriseSunset that returns just the sunset time"
+    sr, ss = GetSunriseSunset(latitude_deg, longitude_deg, utc_datetime, timezone)
     return ss
+
 
 def mean_earth_sun_distance(utc_datetime):
     """Mean Earth-Sun distance is the arithmetical mean of the maximum and minimum distances
@@ -152,11 +155,12 @@ def mean_earth_sun_distance(utc_datetime):
     .. [1] http://sunbird.jrc.it/pvgis/solres/solmod3.htm#clear-sky%20radiation
     .. [2] R. aguiar and et al, "The ESRA user guidebook, vol. 2. database", models and exploitation software-Solar 
             radiation models, p.113
-    """   
+    """
 
     return (1 - (0.0335 * math.sin(360 * ((solar.GetDayOfYear(utc_datetime)) - 94)) / (365)))
 
-def extraterrestrial_irrad(utc_datetime, latitude_deg, longitude_deg,SC=SC_default):
+
+def extraterrestrial_irrad(utc_datetime, latitude_deg, longitude_deg, SC=SC_default):
     """Equation calculates Extratrestrial radiation. Solar radiation incident outside the earth's
     atmosphere is called extraterrestrial radiation. On average the extraterrestrial irradiance
     is 1367 Watts/meter2 (W/m2). This value varies by + or - 3 percent as the earth orbits the sun. 
@@ -190,18 +194,18 @@ def extraterrestrial_irrad(utc_datetime, latitude_deg, longitude_deg,SC=SC_defau
         
     """
     day = solar.GetDayOfYear(utc_datetime)
-    ab = math.cos(2 * math.pi * (solar.GetDayOfYear(utc_datetime) - 1.0)/(365.0))
-    bc = math.sin(2 * math.pi * (solar.GetDayOfYear(utc_datetime) - 1.0)/(365.0))
-    cd = math.cos(2 * (2 * math.pi * (solar.GetDayOfYear(utc_datetime) - 1.0)/(365.0)))
-    df = math.sin(2 * (2 * math.pi * (solar.GetDayOfYear(utc_datetime) - 1.0)/(365.0)))
+    ab = math.cos(2 * math.pi * (solar.GetDayOfYear(utc_datetime) - 1.0) / (365.0))
+    bc = math.sin(2 * math.pi * (solar.GetDayOfYear(utc_datetime) - 1.0) / (365.0))
+    cd = math.cos(2 * (2 * math.pi * (solar.GetDayOfYear(utc_datetime) - 1.0) / (365.0)))
+    df = math.sin(2 * (2 * math.pi * (solar.GetDayOfYear(utc_datetime) - 1.0) / (365.0)))
     decl = solar.GetDeclination(day)
     ha = solar.GetHourAngle(utc_datetime, longitude_deg)
     ZA = math.sin(latitude_deg) * math.sin(decl) + math.cos(latitude_deg) * math.cos(decl) * math.cos(ha)
-    
+
     return SC * ZA * (1.00010 + 0.034221 * ab + 0.001280 * bc + 0.000719 * cd + 0.000077 * df)
 
 
-def declination_degree(utc_datetime, TY = TY_default ):
+def declination_degree(utc_datetime, TY=TY_default):
     """The declination of the sun is the angle between Earth's equatorial plane and a line 
     between the Earth and the sun. It varies between 23.45 degrees and -23.45 degrees,
     hitting zero on the equinoxes and peaking on the solstices.
@@ -222,12 +226,12 @@ def declination_degree(utc_datetime, TY = TY_default ):
     ----------
     .. [1] http://pysolar.org/
              
-    """    
+    """
     return 23.45 * math.sin((2 * math.pi / (TY)) * ((solar.GetDayOfYear(utc_datetime)) - 81))
 
 
-def solarelevation_function_clear(latitude_deg, longitude_deg, utc_datetime,temperature_celsius = 25,
-                                  pressure_millibars = 1013.25,  elevation = elevation_default):
+def solarelevation_function_clear(latitude_deg, longitude_deg, utc_datetime, temperature_celsius=25,
+                                  pressure_millibars=1013.25, elevation=elevation_default):
     """Equation calculates Solar elevation function for clear sky type.
     
     Parameters
@@ -259,12 +263,14 @@ def solarelevation_function_clear(latitude_deg, longitude_deg, utc_datetime,temp
             and proposed new approaches", energy 30 (2005), pp 1533 - 1549.
     
     """
-    altitude = solar.GetAltitude(latitude_deg, longitude_deg,utc_datetime, elevation, temperature_celsius,pressure_millibars)        
+    altitude = solar.GetAltitude(latitude_deg, longitude_deg, utc_datetime, elevation, temperature_celsius,
+                                 pressure_millibars)
     return (0.038175 + (1.5458 * (math.sin(altitude))) + ((-0.59980) * (0.5 * (1 - math.cos(2 * (altitude))))))
 
+
 def solarelevation_function_overcast(latitude_deg, longitude_deg, utc_datetime,
-                                     elevation = elevation_default, temperature_celsius = 25,
-                                     pressure_millibars = 1013.25):
+                                     elevation=elevation_default, temperature_celsius=25,
+                                     pressure_millibars=1013.25):
     """ The function calculates solar elevation function for overcast sky type. 
     This associated hourly overcast radiation model is based on the estimation of the 
     overcast sky transmittance with the sun directly overhead combined with the application 
@@ -302,11 +308,12 @@ def solarelevation_function_overcast(latitude_deg, longitude_deg, utc_datetime,
         Design of Buildings"  
             
     """
-    altitude = solar.GetAltitude(latitude_deg, longitude_deg,utc_datetime, elevation, temperature_celsius,pressure_millibars)
+    altitude = solar.GetAltitude(latitude_deg, longitude_deg, utc_datetime, elevation, temperature_celsius,
+                                 pressure_millibars)
     return ((-0.0067133) + (0.78600 * (math.sin(altitude)))) + (0.22401 * (0.5 * (1 - math.cos(2 * altitude))))
 
 
-def diffuse_transmittance(TL = TL_default):
+def diffuse_transmittance(TL=TL_default):
     """Equation calculates the Diffuse_transmittance and the is the Theoretical Diffuse Irradiance on a horizontal 
     surface when the sun is at the zenith.
     
@@ -329,8 +336,8 @@ def diffuse_transmittance(TL = TL_default):
     return ((-21.657) + (41.752 * (TL)) + (0.51905 * (TL) * (TL)))
 
 
-def diffuse_underclear(latitude_deg, longitude_deg, utc_datetime, elevation = elevation_default, 
-                       temperature_celsius = 25, pressure_millibars = 1013.25, TL=TL_default):    
+def diffuse_underclear(latitude_deg, longitude_deg, utc_datetime, elevation=elevation_default,
+                       temperature_celsius=25, pressure_millibars=1013.25, TL=TL_default):
     """Equation calculates diffuse radiation under clear sky conditions.
     
     Parameters
@@ -362,14 +369,16 @@ def diffuse_underclear(latitude_deg, longitude_deg, utc_datetime, elevation = el
     .. [1] S. Younes, R.Claywell and el al,"Quality control of solar radiation data: present status and proposed 
             new approaches", energy 30 (2005), pp 1533 - 1549.
     
-    """    
+    """
     DT = ((-21.657) + (41.752 * (TL)) + (0.51905 * (TL) * (TL)))
-    altitude = solar.GetAltitude(latitude_deg, longitude_deg,utc_datetime, elevation, temperature_celsius,pressure_millibars)
+    altitude = solar.GetAltitude(latitude_deg, longitude_deg, utc_datetime, elevation, temperature_celsius,
+                                 pressure_millibars)
 
     return mean_earth_sun_distance(utc_datetime) * DT * altitude
 
-def diffuse_underovercast(latitude_deg, longitude_deg, utc_datetime, elevation = elevation_default,
-                          temperature_celsius = 25, pressure_millibars = 1013.25,TL=TL_default):    
+
+def diffuse_underovercast(latitude_deg, longitude_deg, utc_datetime, elevation=elevation_default,
+                          temperature_celsius=25, pressure_millibars=1013.25, TL=TL_default):
     """Function calculates the diffuse radiation under overcast conditions.
     
     Parameters
@@ -401,17 +410,18 @@ def diffuse_underovercast(latitude_deg, longitude_deg, utc_datetime, elevation =
     .. [1] S. Younes, R.Claywell and el al,"Quality control of solar radiation data: present status and proposed 
             new approaches", energy 30 (2005), pp 1533 - 1549.
     
-    """    
+    """
     DT = ((-21.657) + (41.752 * (TL)) + (0.51905 * (TL) * (TL)))
-        
+
     DIFOC = ((mean_earth_sun_distance(utc_datetime)
-              )*(DT)*(solar.GetAltitude(latitude_deg,longitude_deg, utc_datetime, elevation, 
-                                        temperature_celsius, pressure_millibars)))    
+             ) * (DT) * (solar.GetAltitude(latitude_deg, longitude_deg, utc_datetime, elevation,
+                                           temperature_celsius, pressure_millibars)))
     return DIFOC
 
-def direct_underclear(latitude_deg, longitude_deg, utc_datetime, 
-                      temperature_celsius = 25, pressure_millibars = 1013.25, TY = TY_default, 
-                      AM = AM_default, TL = TL_default,elevation = elevation_default):    
+
+def direct_underclear(latitude_deg, longitude_deg, utc_datetime,
+                      temperature_celsius=25, pressure_millibars=1013.25, TY=TY_default,
+                      AM=AM_default, TL=TL_default, elevation=elevation_default):
     """Equation calculates direct radiation under clear sky conditions.
     
     Parameters
@@ -452,20 +462,20 @@ def direct_underclear(latitude_deg, longitude_deg, utc_datetime,
     
     """
     KD = mean_earth_sun_distance(utc_datetime)
-    
-    DEC = declination_degree(utc_datetime,TY)
-    
+
+    DEC = declination_degree(utc_datetime, TY)
+
     DIRC = (1367 * KD * math.exp(-0.8662 * (AM) * (TL) * (DEC)
-                             ) * math.sin(solar.GetAltitude(latitude_deg,longitude_deg, 
-                                                          utc_datetime,elevation , 
-                                                          temperature_celsius , pressure_millibars )))
-    
+    ) * math.sin(solar.GetAltitude(latitude_deg, longitude_deg,
+                                   utc_datetime, elevation,
+                                   temperature_celsius, pressure_millibars)))
+
     return DIRC
 
-def global_irradiance_clear(DIRC, DIFFC, latitude_deg, longitude_deg, utc_datetime, 
-                            temperature_celsius = 25, pressure_millibars = 1013.25, TY = TY_default, 
-                            AM = AM_default, TL = TL_default, elevation = elevation_default):
-    
+
+def global_irradiance_clear(DIRC, DIFFC, latitude_deg, longitude_deg, utc_datetime,
+                            temperature_celsius=25, pressure_millibars=1013.25, TY=TY_default,
+                            AM=AM_default, TL=TL_default, elevation=elevation_default):
     """Equation calculates global irradiance under clear sky conditions.
     
     Parameters
@@ -514,21 +524,21 @@ def global_irradiance_clear(DIRC, DIFFC, latitude_deg, longitude_deg, utc_dateti
             new approaches", energy 30 (2005), pp 1533 - 1549.
             
     """
-    DIRC =  direct_underclear(latitude_deg, longitude_deg, utc_datetime, 
-                              TY, AM, TL, elevation, temperature_celsius = 25, 
-                              pressure_millibars = 1013.25)
-    
-    DIFFC = diffuse_underclear(latitude_deg, longitude_deg, utc_datetime, 
-                               elevation, temperature_celsius = 25, pressure_millibars= 1013.25)
-    
-    ghic = (DIRC + DIFFC)
-    
-    return ghic
-    
+    DIRC = direct_underclear(latitude_deg, longitude_deg, utc_datetime,
+                             TY, AM, TL, elevation, temperature_celsius=25,
+                             pressure_millibars=1013.25)
 
-def global_irradiance_overcast(latitude_deg, longitude_deg, utc_datetime, 
-                               elevation = elevation_default, temperature_celsius = 25, 
-                               pressure_millibars = 1013.25):
+    DIFFC = diffuse_underclear(latitude_deg, longitude_deg, utc_datetime,
+                               elevation, temperature_celsius=25, pressure_millibars=1013.25)
+
+    ghic = (DIRC + DIFFC)
+
+    return ghic
+
+
+def global_irradiance_overcast(latitude_deg, longitude_deg, utc_datetime,
+                               elevation=elevation_default, temperature_celsius=25,
+                               pressure_millibars=1013.25):
     """Calculated Global is used to compare to the Diffuse under overcast conditions.
     Under overcast skies, global and diffuse are expected to be equal due to the absence of the beam 
     component.
@@ -564,14 +574,14 @@ def global_irradiance_overcast(latitude_deg, longitude_deg, utc_datetime,
             and proposed new approaches", energy 30
             (2005), pp 1533 - 1549.
 
-    """    
-    ghioc = (572 * (solar.GetAltitude(latitude_deg, longitude_deg, utc_datetime, 
-                                    elevation , temperature_celsius , pressure_millibars )))
-    
-    return ghioc
-    
+    """
+    ghioc = (572 * (solar.GetAltitude(latitude_deg, longitude_deg, utc_datetime,
+                                      elevation, temperature_celsius, pressure_millibars)))
 
-def diffuse_ratio(DIFF_data,ghi_data):
+    return ghioc
+
+
+def diffuse_ratio(DIFF_data, ghi_data):
     """Function calculates the Diffuse ratio.
     
     Parameters
@@ -591,14 +601,13 @@ def diffuse_ratio(DIFF_data,ghi_data):
     .. [1] S. Younes, R.Claywell and el al,"Quality control of solar radiation data: present status and proposed 
             new approaches", energy 30 (2005), pp 1533 - 1549.
            
-    """    
-    K = DIFF_data/ghi_data
-    
-    return K 
-    
+    """
+    K = DIFF_data / ghi_data
+
+    return K
+
 
 def clear_index(ghi_data, utc_datetime, latitude_deg, longitude_deg):
-   
     """This calculates the clear index ratio.
     
     Parameters
@@ -624,14 +633,15 @@ def clear_index(ghi_data, utc_datetime, latitude_deg, longitude_deg):
     .. [1] S. Younes, R.Claywell and el al,"Quality control of solar radiation data: present status and proposed 
             new approaches", energy 30 (2005), pp 1533 - 1549.
             
-    """    
+    """
     EXTR1 = extraterrestrial_irrad(utc_datetime, latitude_deg, longitude_deg)
-    
-    KT = (ghi_data/EXTR1)
-    
+
+    KT = (ghi_data / EXTR1)
+
     return KT
-  
-def date_with_decimal_hour(date_utc, hour_decimal):    
+
+
+def date_with_decimal_hour(date_utc, hour_decimal):
     """This converts dates with decimal hour to datetime_hour.
     An improved version :mod:`conversions_time`
     
@@ -649,10 +659,10 @@ def date_with_decimal_hour(date_utc, hour_decimal):
         datetime_hour
     
     """
-    hour_dms = (int(hour_decimal), int((hour_decimal-int(hour_decimal))*60), 0,)
-    
+    hour_dms = (int(hour_decimal), int((hour_decimal - int(hour_decimal)) * 60), 0,)
+
     datetime_hour = dt(date_utc.year, date_utc.month, date_utc.day,
-        hour_dms[0], hour_dms[1],int(hour_dms[2]))
+                       hour_dms[0], hour_dms[1], int(hour_dms[2]))
 
     return datetime_hour
 

@@ -1,8 +1,11 @@
+import math
+
 import rhinoscript as rs
 import scriptcontext as sc
+
 import Rhino as r
-import math
 from util import geoutil
+import System.Threading.Tasks as tasks
 
 
 def rd(wait=False):
@@ -41,7 +44,7 @@ def objects_in_radius(point, radius, type_filter=rs.selection.filter.allobjects,
     objects = sc.doc.Objects.GetObjectList(rs.selection.__FilterHelper(type_filter))
     contained_objects = []
 
-    for obj in objects:
+    def solve_parallel(obj):
         if simple:
             if contain_bb.Contains(obj.Geometry.GetBoundingBox(False)) is True:
                 contained_objects.append(obj)
@@ -49,6 +52,8 @@ def objects_in_radius(point, radius, type_filter=rs.selection.filter.allobjects,
             intersection = r.Geometry.BoundingBox.Intersection(contain_bb, obj.Geometry.GetBoundingBox(False))
             if intersection.IsValid:
                 contained_objects.append(obj)
+
+    tasks.Parallel.ForEach(objects, solve_parallel)
 
     return contained_objects
 
@@ -60,13 +65,16 @@ def create_extrusion(profile, start_point, end_point):
     return extrusion
 
 
-def create_shadow(obj, vector, add_to_doc=False):
+def create_shadow(obj, vector):
     obj = rs.utility.coercemesh(obj)
+    #obj = obj.Duplicate()
+
     vector = rs.utility.coerce3dvector(vector)
     ground_plane = rs.plane.WorldXYPlane()
 
     plane = r.Geometry.Plane(ground_plane.Origin, vector)
     outlines = obj.GetOutlines(plane)
+    #obj.Dispose()
 
     if outlines:
         for i in range(len(outlines)):
@@ -81,13 +89,9 @@ def create_shadow(obj, vector, add_to_doc=False):
 
         outline = outlines[0]
 
-        if add_to_doc is True:
-            rc = sc.doc.Objects.AddPolyline(outline)
-            return rc
-        else:
-            return outline
-
-    return outlines
+        return outline
+    else:
+        return outlines
 
 
 def curve_midpoint(curve):

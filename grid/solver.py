@@ -11,7 +11,7 @@ from util import rsutil, geoutil
 
 
 class GridSolver(object):
-    def __init__(self, position, lon=None, date=datetime.date.today()):
+    def __init__(self, position, lon=None, date=datetime.date.today(), objects=None):
         self.date = date
 
         if lon is not None:
@@ -22,8 +22,11 @@ class GridSolver(object):
         else:
             self.position = rs.utility.coerce3dpoint(position)
 
-        objects = rsutil.objects_in_radius(self.position, 100, rs.selection.filter.extrusion, False)
         self.objects = []
+
+        if objects is None:
+            objects = rsutil.objects_in_radius(self.position, 100, rs.selection.filter.extrusion, False)
+
         for o in objects:
             self.objects.extend(rsutil.basic_mesh(o))
 
@@ -31,20 +34,24 @@ class GridSolver(object):
             self.lat, self.lon = geoutil.coord2latlon(self.position.X, self.position.Y)
 
         self.modifiers = []
-        self.grid = Grid(self.position, 100, 20)
+        self.grid = Grid(self.position, 105, 15)
 
     def run(self):
         self.grid.reset()
         [modifier.solve() for modifier in self.modifiers]
 
-    def add_modifier(self, modifier, weight=1):
+    def add_modifier(self, modifier, weight=1.0):
         self.modifiers.append(modifier(self, float(weight)))
 
-    def get_results(self, count=0):
+    def get_results(self, count=None, treshold=None):
         [box.compute_score(self.modifiers) for box in self.grid.sub_boxes]
+
         result = sorted(self.grid.sub_boxes, key=lambda box: box.score, reverse=True)
 
-        if count > 0:
+        if treshold is not None:
+            result = [box for box in result if box.score > treshold]
+
+        if count is not None:
             result = result[:count]
 
         return result
@@ -52,6 +59,9 @@ class GridSolver(object):
     def display_results(self):
         self.get_results()
         self.grid.display_results()
+
+    def dispose(self):
+        self.grid.dispose()
 
 
 class GridBox(object):
@@ -102,6 +112,7 @@ class Grid(object):
         self.position = position
         self.resolution = resolution
         self.size = size
+        self.rcs = []
 
         if not rs.layer.IsLayer('analysis'):
             rs.layer.AddLayer('analysis')
@@ -182,6 +193,7 @@ class Grid(object):
 
             grid_box = r.Geometry.Brep.CreatePlanarBreps(sub_box.curve)
             guid = sc.doc.Objects.AddBrep(grid_box[0])
+            self.rcs.append(guid)
             rhino_object = sc.doc.Objects.Find(guid)
             attr = rhino_object.Attributes
             rc, gc, bc = self.lerp_color((0, 60, 100), (255, 153, 0), sub_box.score)
@@ -189,8 +201,15 @@ class Grid(object):
             attr.ColorSource = r.DocObjects.ObjectColorSource.ColorFromObject
             sc.doc.Objects.ModifyAttributes(rhino_object, attr, True)
 
+            rsutil.rdnd()
+            rs.utility.Sleep(15)
+
         rs.layer.CurrentLayer(current_layer)
         rsutil.rdnd()
 
     def reset(self):
         [box.reset() for box in self.sub_boxes]
+
+    def dispose(self):
+        if len(self.rcs) > 0:
+            rs.object.DeleteObjects(self.rcs)

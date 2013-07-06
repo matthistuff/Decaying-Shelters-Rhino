@@ -67,6 +67,6 @@ htmlhelp_basename = 'Pysolardoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, document class [howto/manual]).
 latex_documents = [
-  ('index', 'Pysolar.tex', 'Pysolar Documentation',
-   'Brandon Stafford', 'manual'),
+    ('index', 'Pysolar.tex', 'Pysolar Documentation',
+     'Brandon Stafford', 'manual'),
 ]

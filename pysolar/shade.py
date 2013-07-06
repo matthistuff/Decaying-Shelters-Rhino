@@ -22,21 +22,25 @@
 """
 import math
 
+
 def GetSideByLawOfCosines(side_a, side_b, included_angle_deg):
-    return math.sqrt(pow((side_a), 2) + pow(side_b, 2) - (2 * side_a * side_b * math.cos(math.radians(included_angle_deg))))
+    return math.sqrt(
+        pow((side_a), 2) + pow(side_b, 2) - (2 * side_a * side_b * math.cos(math.radians(included_angle_deg))))
+
 
 def GetXShade(width, x_spacing, azimuth_deg):
-    n = GetSideByLawOfCosines(width/2, x_spacing, azimuth_deg)
-    p = (width/2) * math.sin(math.radians(azimuth_deg))
-    theta_deg = math.degrees(math.asin(p/n))
+    n = GetSideByLawOfCosines(width / 2, x_spacing, azimuth_deg)
+    p = (width / 2) * math.sin(math.radians(azimuth_deg))
+    theta_deg = math.degrees(math.asin(p / n))
     alpha_deg = azimuth_deg + theta_deg
-    d = GetSideByLawOfCosines(width/2, n, alpha_deg)
-    gamma_deg = math.degrees(math.asin((n * math.sin(math.radians(alpha_deg)))/d))
+    d = GetSideByLawOfCosines(width / 2, n, alpha_deg)
+    gamma_deg = math.degrees(math.asin((n * math.sin(math.radians(alpha_deg))) / d))
     shaded_width = d * math.cos(math.radians(gamma_deg))
-    if(pow(d, 2) + pow(width/2, 2) < pow(n, 2)): # check for obtuse triangle
+    if (pow(d, 2) + pow(width / 2, 2) < pow(n, 2)): # check for obtuse triangle
         shaded_width = 0
-    #print "theta in deg:", theta_deg, "gamma in deg:", gamma_deg, "shaded width:", shaded_width
+        #print "theta in deg:", theta_deg, "gamma in deg:", gamma_deg, "shaded width:", shaded_width
     return min(shaded_width, width)
+
 
 def GetYShade(height, y_spacing, altitude_deg):
     return GetXShade(height, y_spacing, 90 - altitude_deg)

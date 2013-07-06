@@ -14,37 +14,74 @@ from util import geoutil, rsutil
 
 class OSMBuilding(object):
     def __init__(self, curve=None, extrusion=None):
-        self.curve = None
-        self.extrusion = None
-        self.id = 0
+        self.curve = curve
+        self.extrusion = extrusion
+        self.id = None
+        self.rsobject = None
+        self.bbox = None
+
+    def get_bbox(self):
+        if self.bbox is None:
+            self.bbox = self.curve.GetBoundingBox(False)
+
+        return self.bbox
+
 
     def add_to_doc(self):
-        self.id = sc.doc.Objects.AddExtrusion(self.extrusion)
+        if self.id is None:
+            self.id = sc.doc.Objects.AddExtrusion(self.extrusion)
+            self.rsobject = rs.utility.coercerhinoobject(self.id)
         return self.id
 
 
 class OSMObject(object):
     def __init__(self, curve=None):
         self.curve = curve
-        self.id = 0
+        self.id = None
 
     def add_to_doc(self):
-        self.id = sc.doc.Objects.AddCurve(self.curve)
+        if self.id is None:
+            self.id = sc.doc.Objects.AddCurve(self.curve)
         return self.id
 
 
 class OSMData(object):
     def __init__(self):
         self.processed_shapes = dict()
+        self.buildings = []
+        self.highways = []
+
+    def get_buildings_in_radius(self, location, radius=100, simple=True):
+        location = rs.utility.coerce3dpoint(location)
+
+        contain_bb = r.Geometry.BoundingBox(
+            location.X - radius,
+            location.Y - radius,
+            location.Z - radius,
+            location.X + radius,
+            location.Y + radius,
+            location.Z + radius
+        )
+
+        contained_objects = []
+
+        def solve_parallel(building):
+            if simple:
+                if contain_bb.Contains(building.get_bbox()) is True:
+                    contained_objects.append(building)
+            else:
+                intersection = r.Geometry.BoundingBox.Intersection(contain_bb, building.get_bbox())
+                if intersection.IsValid:
+                    contained_objects.append(building)
+
+        tasks.Parallel.ForEach(self.buildings, solve_parallel)
+
+        return contained_objects
 
     def load_data(self, lat, lon, radius):
         self.lat = lat
         self.lon = lon
         self.radius = radius
-
-        x, y = geoutil.latlon2coord(self.lat, self.lon)
-        offset = self.radius * 5
-        rs.view.ViewCameraTarget('Perspective', (x + offset, y - offset, offset), (x, y, 0))
 
         self.__query_api()
         return self.raw_data
@@ -53,56 +90,63 @@ class OSMData(object):
         if raw_data is None:
             raw_data = self.raw_data
 
-        self.add_to_doc = add_to_doc
-        self.animate = animate
-        self.animate = False
-
-        self.buildings = []
-        self.highways = []
-
-        current_layer = rs.layer.CurrentLayer()
-        if not rs.layer.IsLayer('osm'):
-            rs.layer.AddLayer('osm')
-        rs.layer.CurrentLayer('osm')
+        if add_to_doc is True:
+            current_layer = rs.layer.CurrentLayer()
+            if not rs.layer.IsLayer('osm'):
+                rs.layer.AddLayer('osm')
+            rs.layer.CurrentLayer('osm')
 
         self.nodes = [node for node in raw_data['elements'] if node['type'] == 'node']
         self.ways = [node for node in raw_data['elements'] if node['type'] == 'way']
 
+        self.loaded_buildings = []
+        self.loaded_highways = []
+
         def solve_parallel(i):
             self.process_way(i)
 
-        tasks.Parallel.ForEach(xrange(len(self.ways)), solve_parallel)
+        tasks.Parallel.ForEach(self.ways, solve_parallel)
         #[solve_parallel(i) for i in xrange(len(self.ways))]
 
-        if self.add_to_doc is True:
-            rs.group.AddGroup('highway')
-            rs.group.AddGroup('building')
+        if add_to_doc is True:
+            if not rs.group.IsGroup('highway'):
+                rs.group.AddGroup('highway')
+            if not rs.group.IsGroup('building'):
+                rs.group.AddGroup('building')
 
             if not animate:
-                building_ids = [osmobject.add_to_doc() for osmobject in self.buildings]
-                rs.group.AddObjectsToGroup(building_ids, 'building')
+                for osmobject in self.loaded_highways:
+                    self.highways.append(osmobject)
+                    rs.group.AddObjectToGroup(osmobject.add_to_doc(), 'highway')
 
-                highway_ids = [osmobject.add_to_doc() for osmobject in self.highways]
-                rs.group.AddObjectsToGroup(highway_ids, 'highway')
+                for osmobject in self.loaded_buildings:
+                    self.buildings.append(osmobject)
+                    rs.group.AddObjectToGroup(osmobject.add_to_doc(), 'building')
 
             else:
                 i = 0
-                for osmobject in self.highways:
+                for osmobject in self.loaded_highways:
+                    self.highways.append(osmobject)
                     rs.group.AddObjectToGroup(osmobject.add_to_doc(), 'highway')
-                    rsutil.rdnd()
+                    if i % 5 is 0:
+                        rsutil.rdnd()
+                    i += 1
 
-                for osmobject in self.buildings:
+                for osmobject in self.loaded_buildings:
+                    self.buildings.append(osmobject)
                     rs.group.AddObjectToGroup(osmobject.add_to_doc(), 'building')
                     if i % 5 is 0:
                         rsutil.rdnd()
                     i += 1
 
-        rs.layer.CurrentLayer(current_layer)
+            rs.layer.CurrentLayer(current_layer)
+
+        else:
+            [self.highways.append(osmobject) for osmobject in self.loaded_highways]
+            [self.buildings.append(osmobject) for osmobject in self.loaded_buildings]
 
 
-    def process_way(self, i):
-        way = self.ways[i]
-
+    def process_way(self, way):
         if self.processed_shapes.has_key(way['id']):
             return
 
@@ -126,7 +170,7 @@ class OSMData(object):
             curve.MakeClosed(0)
 
             building = OSMBuilding(curve)
-            self.buildings.append(building)
+            self.loaded_buildings.append(building)
 
             height = 12
             min_height = 0
@@ -153,7 +197,7 @@ class OSMData(object):
             building.extrusion = extrusion
 
         elif way['tags'].has_key('highway'):
-            self.highways.append(OSMObject(curve))
+            self.loaded_highways.append(OSMObject(curve))
 
 
     def __query_api(self):
