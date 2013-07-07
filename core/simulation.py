@@ -128,6 +128,9 @@ class DSSim(object):
         self.run_once()
 
     def create_text(self, osm_object):
+        skinny_chars = ['i', 'l', 't', 'j', 'f', 'r']
+        wide_chars = ['m', 'w']
+
         if osm_object.tags.has_key('name'):
             name = list(osm_object.tags['name'].lower())
             curve_length = osm_object.curve.GetLength()
@@ -141,11 +144,16 @@ class DSSim(object):
                 if plane.ZAxis.Z < 0:
                     plane.Rotate(math.pi, plane.XAxis)
 
-                rs.geometry.AddText(name[name_index], plane, self.text_height, 'Courier New')
+                rs.geometry.AddText(name[name_index], plane, self.text_height, 'Alte DIN 1451 Mittelschrift')
+
+                if name[name_index] in skinny_chars:
+                    current_position += self.text_height * 0.5
+                elif name[name_index] in wide_chars:
+                    current_position += self.text_height * 1.2
+                else:
+                    current_position += self.text_height * 0.8
 
                 name_index += 1
-                current_position += self.text_height * 0.9
-
                 if not name_index < len(name):
                     name_index = 0
                     current_position += self.text_height * 20
