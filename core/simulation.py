@@ -114,8 +114,6 @@ class DSSim(object):
         shelter_instance.create()
         rsutil.rdnd()
 
-        rs.utility.Sleep(400)
-
         self.solver_instance.dispose()
 
         self.circle_shelter()
