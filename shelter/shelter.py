@@ -2,7 +2,7 @@ import datetime
 
 import rhinoscript as rs
 
-from util import geoutil, weather, rsutil
+from util import geoutil, rsutil
 from util.sun import SunVector
 import hull
 import plan
@@ -29,8 +29,8 @@ class Shelter(object):
         self.sun_positions = sun.get_positions(60)
         self.sun_vectors = [sun.sun_to_vec(p[0], p[1]) for p in self.sun_positions]
 
-        self.forecast = weather.get_forecast(self.lat, self.lon, self.start)
-        #self.forecast = []
+        #self.forecast = weather.get_forecast(self.lat, self.lon, self.start)
+        self.forecast = []
 
         self.plan = plan.Plan(self)
         self.hull = hull.Hull(self)

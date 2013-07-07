@@ -1,6 +1,9 @@
 import time
 
-from util import rsutil
+import rhinoscript as rs
+import scriptcontext as sc
+
+import Rhino as r
 
 
 class Loop(object):
@@ -13,11 +16,19 @@ class Loop(object):
         td = time.time() - self.time
         if td > self.delta:
             [callback(td) for callback in self.callbacks]
-            rsutil.rdnd()
+            self.redraw()
             self.time = time.time()
 
     def add_callback(self, callback):
         self.callbacks.append(callback)
+
+    def remove_callback(self, callback):
+        try:
+            self.callbacks.remove(callback)
+        except ValueError:
+            return False
+
+        return True
 
     def start(self):
         self.running = True
@@ -30,4 +41,10 @@ class Loop(object):
 
     def stop(self):
         self.running = False
-        rsutil.rdnd()
+        self.redraw()
+
+    def redraw(self):
+        rs.document.EnableRedraw()
+        sc.doc.Views.Redraw()
+        r.RhinoApp.Wait()
+        rs.document.EnableRedraw(False)

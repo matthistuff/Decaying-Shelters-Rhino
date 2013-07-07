@@ -1,4 +1,3 @@
-import math
 import rhinoscript as rs
 import scriptcontext as sc
 import Rhino as r

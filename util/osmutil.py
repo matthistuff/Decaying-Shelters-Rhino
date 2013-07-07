@@ -35,7 +35,8 @@ class OSMBuilding(object):
 
 
 class OSMObject(object):
-    def __init__(self, curve=None):
+    def __init__(self, tags=None, curve=None):
+        self.tags = tags
         self.curve = curve
         self.id = None
 
@@ -86,7 +87,7 @@ class OSMData(object):
         self.__query_api()
         return self.raw_data
 
-    def process_data(self, raw_data=None, add_to_doc=True, animate=False):
+    def process_data(self, raw_data=None, add_to_doc=True, animate=False, filter_function=None):
         if raw_data is None:
             raw_data = self.raw_data
 
@@ -128,6 +129,7 @@ class OSMData(object):
                 for osmobject in self.loaded_highways:
                     self.highways.append(osmobject)
                     rs.group.AddObjectToGroup(osmobject.add_to_doc(), 'highway')
+                    filter_function(osmobject)
                     if i % 5 is 0:
                         rsutil.rdnd()
                     i += 1
@@ -199,7 +201,7 @@ class OSMData(object):
             building.extrusion = extrusion
 
         elif way['tags'].has_key('highway'):
-            self.loaded_highways.append(OSMObject(curve))
+            self.loaded_highways.append(OSMObject(way['tags'], curve))
 
 
     def __query_api(self):
@@ -227,7 +229,7 @@ class OSMData(object):
         conn.request("GET", query, params)
 
         response = conn.getresponse()
-        result = response.read()
+        result = response.read().decode('utf-8')
 
         conn.close()
 

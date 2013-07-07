@@ -1,5 +1,3 @@
-import rhinoscript as rs
-
 import Rhino as r
 import System.Threading.Tasks as tasks
 

@@ -4,7 +4,7 @@ from urlparse import urlparse, parse_qs
 import json
 
 from grid import solver, grid_modifiers
-from shelter import shelter, plan_modifiers, hull_modifiers
+from shelter import plan_modifiers, hull_modifiers
 from util import osmutil, geoutil, rsutil
 
 

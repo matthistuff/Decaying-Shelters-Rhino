@@ -1,8 +1,9 @@
-import pytz
 import datetime
+import math
+
+import pytz
 from pysolar import solar
 from pysolar.util import GetSunriseSunset
-import math
 
 
 class SunVector(object):

@@ -1,5 +1,3 @@
-from core import app
+from core import simulation
 
-reload(app)
-
-app.DSApp()
+simulation.DSSim()
