@@ -192,6 +192,7 @@ class Grid(object):
             sub_box = self.sub_boxes[i]
 
             grid_box = r.Geometry.Brep.CreatePlanarBreps(sub_box.curve)
+            grid_box[0].Translate(0, 0, -1)
             guid = sc.doc.Objects.AddBrep(grid_box[0])
             self.rcs.append(guid)
             rhino_object = sc.doc.Objects.Find(guid)
