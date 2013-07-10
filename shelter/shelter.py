@@ -43,3 +43,6 @@ class Shelter(object):
         self.plan.create()
         self.hull.create()
         self.color.create()
+
+    def dispose(self):
+        self.hull.dispose()

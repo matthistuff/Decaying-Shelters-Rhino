@@ -10,7 +10,7 @@ from util import osmutil, geoutil, rsutil
 
 class DSServer(HTTPServer):
     def __init__(self):
-        HTTPServer.__init__(self, ('192.168.178.50', 8080), DSRequestHandler)
+        HTTPServer.__init__(self, ('172.16.20.83', 8080), DSRequestHandler)
 
         self.osm = osmutil.OSMData()
 

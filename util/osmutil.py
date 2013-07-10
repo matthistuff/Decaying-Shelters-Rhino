@@ -52,6 +52,13 @@ class OSMData(object):
         self.buildings = []
         self.highways = []
 
+    def dispose(self):
+        [rs.object.DeleteObject(obj.id) for obj in self.buildings]
+        [rs.object.DeleteObject(obj.id) for obj in self.highways]
+        self.processed_shapes = dict()
+        self.buildings = []
+        self.highways = []
+
     def get_buildings_in_radius(self, location, radius=100, simple=True):
         location = rs.utility.coerce3dpoint(location)
 

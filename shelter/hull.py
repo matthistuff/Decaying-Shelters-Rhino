@@ -81,6 +81,9 @@ class Hull(object):
     def add_modifier(self, modifier, strength=1):
         self.modifiers.append(modifier(self, strength))
 
+    def dispose(self):
+        rs.object.DeleteObject(self.guid)
+
 
 class HullRound(Hull):
     def __create_section_shape(self, i):

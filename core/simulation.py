@@ -18,10 +18,11 @@ class DSSim(object):
 
         self.cam = camera.Camera()
         self.osm = osmutil.OSMData()
-        self.loop = loop.Loop()
+        self.loop = loop.Loop(30)
         self.loop.add_callback(self.cam.update_tween)
 
-        self.solvers = []
+        self.shelters = []
+        self.text = []
 
         self.text_height = 3.5
 
@@ -47,6 +48,9 @@ class DSSim(object):
         # Safety net
         self.loop.stop()
 
+        if len(self.shelters) > 30:
+            self.reset()
+
         self.lat, self.lon = self.random_coord()
         self.date = self.random_date()
 
@@ -55,6 +59,13 @@ class DSSim(object):
         self.cam.pan_to(self.position, distance=200, hop=150, tween_type=self.cam.tweener.IN_OUT_CUBIC,
                         on_complete=self.load_data)
         self.loop.start()
+
+    def reset(self):
+        [s.dispose() for s in self.shelters]
+        self.shelters = []
+        [rs.object.DeleteObject(t) for t in self.text]
+        self.text = []
+        self.osm.dispose()
 
     def load_data(self):
         self.loop.stop()
@@ -91,6 +102,7 @@ class DSSim(object):
         self.loop.stop()
 
         shelter_instance = shelter.Shelter(self.position, start=self.date)
+        self.shelters.append(shelter_instance)
 
         #
         # Modifiers for the plan
@@ -144,7 +156,8 @@ class DSSim(object):
                 if plane.ZAxis.Z < 0:
                     plane.Rotate(math.pi, plane.XAxis)
 
-                rs.geometry.AddText(name[name_index], plane, self.text_height, 'Alte DIN 1451 Mittelschrift')
+                self.text.append(
+                    rs.geometry.AddText(name[name_index], plane, self.text_height, 'Alte DIN 1451 Mittelschrift'))
 
                 if name[name_index] in skinny_chars:
                     current_position += self.text_height * 0.5
